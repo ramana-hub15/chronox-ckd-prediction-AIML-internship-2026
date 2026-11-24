@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "partials/_svg_icons.html" import auth_medical_svg %}
+
+{% block title %}Create Account – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-xl-10">
+      <div class="cx-surface overflow-hidden">
+        <div class="row g-0">
+          <div class="col-lg-5 p-4 p-lg-5 text-white d-flex flex-column justify-content-between" style="background: linear-gradient(155deg, #072840, #0B3C5D 60%, #0E7C73);">
+            <div>
+              <span class="badge rounded-pill mb-3" style="background: rgba(255,255,255,0.16);">Get Started</span>
+              <h2 class="fw-bold mb-2">Create Your ChronoX Account</h2>
+              <p class="small opacity-85">Save screenings, export PDF reports, and monitor CKD risk trajectories over time.</p>
+            </div>
+            <div class="my-3">{{ auth_medical_svg() }}</div>
+            <div class="small opacity-85">
+              <i class="bi bi-lock-fill me-1"></i> Passwords are salted &amp; hashed with Werkzeug security.
+            </div>
+          </div>
+
+          <div class="col-lg-7 p-4 p-lg-5">
+            <h3 class="fw-bold mb-1">Register</h3>
+            <p class="text-muted small mb-4">Complete the fields below to set up your profile.</p>
+
+            <form method="post" action="{{ url_for('auth.register') }}" class="needs-shake" novalidate>
+              {{ form.hidden_tag() }}
+
+              <div class="form-floating mb-3">
+                {{ form.full_name(class="form-control" + (" is-invalid" if form.full_name.errors else ""), id="regName", placeholder="Full Name", required=true, minlength="2") }}
+                <label for="regName">Full Name</label>
+                {% for err in form.full_name.errors %}
+                <div class="invalid-feedback d-block">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="form-floating mb-3">
+                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), id="regEmail", placeholder="name@example.com", required=true) }}
+                <label for="regEmail">Email Address</label>
+                {% for err in form.email.errors %}
+                <div class="invalid-feedback d-block">{{ err }}</div>
+                {% endfor %}
+              </div>
+
+              <div class="input-group mb-3">
+                <div class="form-floating flex-grow-1">
+                  {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), id="regPassword", placeholder="Password", required=true, minlength="8") }}
+                  <label for="regPassword">Password (min 8 characters)</label>
+                </div>
+                <button class="btn btn-cx-outline" type="button" data-toggle-password="regPassword" aria-label="Show password">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              {% for err in form.password.errors %}
+              <div class="text-danger small mb-2">{{ err }}</div>
+              {% endfor %}
+
+              <div class="input-group mb-4">
+                <div class="form-floating flex-grow-1">
+                  {{ form.confirm_password(class="form-control" + (" is-invalid" if form.confirm_password.errors else ""), id="regConfirm", placeholder="Confirm Password", required=true) }}
+                  <label for="regConfirm">Confirm Password</label>
+                </div>
+                <button class="btn btn-cx-outline" type="button" data-toggle-password="regConfirm" aria-label="Show password">
+                  <i class="bi bi-eye"></i>
+                </button>
+              </div>
+              {% for err in form.confirm_password.errors %}
+              <div class="text-danger small mb-3">{{ err }}</div>
+              {% endfor %}
+
+              <button type="submit" class="btn btn-cx-teal w-100 mb-3">
+                <i class="bi bi-person-plus-fill"></i> Create Account
+              </button>
+            </form>
+
+            <p class="text-center small text-muted mb-0">
+              Already registered? <a href="{{ url_for('auth.login') }}" class="fw-semibold">Sign in here</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

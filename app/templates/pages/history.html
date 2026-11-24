@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% from "partials/_svg_icons.html" import kidney_icon %}
+
+{% block title %}Screening History – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <span class="cx-badge-soft mb-2"><i class="bi bi-clock-history"></i> Longitudinal Records</span>
+      <h1 class="h2 fw-bold mb-1">Prediction History</h1>
+      <p class="text-muted small mb-0">Search, filter, sort, export to CSV, or manage saved CKD screenings.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('clinical.export_history_csv') }}" class="btn btn-cx-outline">
+        <i class="bi bi-filetype-csv"></i> Export CSV
+      </a>
+      <a href="{{ url_for('clinical.predict') }}" class="btn btn-cx-teal">
+        <i class="bi bi-plus-circle"></i> New Screening
+      </a>
+    </div>
+  </div>
+
+  <!-- Search, Filter & Sort Controls -->
+  <form method="get" action="{{ url_for('clinical.history') }}" class="cx-card p-3 p-md-4 mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="historySearch" class="form-label small fw-semibold">Search Label / Stage</label>
+        <input type="search" name="q" id="historySearch" class="form-control" value="{{ query_text }}" placeholder="e.g., Hypertension, Stage 3">
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="bandFilter" class="form-label small fw-semibold">Risk Band</label>
+        <select name="band" id="bandFilter" class="form-select">
+          <option value="">All Bands</option>
+          <option value="Low" {% if band_filter == 'Low' %}selected{% endif %}>Low (&lt;30%)</option>
+          <option value="Moderate" {% if band_filter == 'Moderate' %}selected{% endif %}>Moderate (30–60%)</option>
+          <option value="High" {% if band_filter == 'High' %}selected{% endif %}>High (&gt;60%)</option>
+        </select>
+      </div>
+      <div class="col-6 col-md-2">
+        <label for="modelFilter" class="form-label small fw-semibold">Model</label>
+        <select name="model" id="modelFilter" class="form-select">
+          <option value="">All Models</option>
+          <option value="both" {% if model_filter == 'both' %}selected{% endif %}>Consensus</option>
+          <option value="ann" {% if model_filter == 'ann' %}selected{% endif %}>ANN</option>
+          <option value="logistic" {% if model_filter == 'logistic' %}selected{% endif %}>Logistic</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="sortFilter" class="form-label small fw-semibold">Sort By</label>
+        <select name="sort" id="sortFilter" class="form-select">
+          <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+          <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+          <option value="risk_desc" {% if sort_by == 'risk_desc' %}selected{% endif %}>Highest Risk</option>
+          <option value="risk_asc" {% if sort_by == 'risk_asc' %}selected{% endif %}>Lowest Risk</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-cx-primary w-100">Apply</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- Records Table -->
+  <div class="cx-card p-4">
+    {% if predictions %}
+    <div class="table-responsive">
+      <table class="table align-middle mb-0" id="historyTable">
+        <thead>
+          <tr class="small text-muted">
+            <th>Screening Label</th>
+            <th>Date (UTC)</th>
+            <th>Model</th>
+            <th>Risk Score</th>
+            <th>Creatinine / Hemo</th>
+            <th>Stage Hint</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in predictions %}
+          <tr>
+            <td class="fw-semibold">{{ p.patient_label }}</td>
+            <td class="small text-muted">{{ p.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td><span class="badge bg-secondary-subtle text-body rounded-pill">{{ p.model_used|upper }}</span></td>
+            <td><span class="risk-pill risk-pill-{{ p.risk_band|lower }}">{{ "%.1f"|format(p.risk_score) }}% ({{ p.risk_band }})</span></td>
+            <td class="small">{{ p.sc }} mg/dL &middot; {{ p.hemo }} g/dL</td>
+            <td class="small">{{ p.stage_hint }}</td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-2">
+                <a href="{{ url_for('clinical.result', prediction_id=p.id) }}" class="btn btn-sm btn-cx-outline">View</a>
+                <form method="post" action="{{ url_for('clinical.delete_prediction', prediction_id=p.id) }}" onsubmit="return confirm('Delete this screening record?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger rounded-3" style="min-height: 38px;" aria-label="Delete screening {{ p.id }}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+      {{ kidney_icon(44) }}
+      <p class="text-muted mt-3 mb-3">No screening records match your current filters.</p>
+      <a href="{{ url_for('clinical.history') }}" class="btn btn-cx-outline btn-sm me-2">Reset Filters</a>
+      <a href="{{ url_for('clinical.predict') }}" class="btn btn-cx-teal btn-sm">Run Screening</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

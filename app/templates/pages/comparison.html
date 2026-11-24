@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Model Comparison – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="mb-4">
+    <span class="cx-badge-soft mb-2"><i class="bi bi-cpu"></i> Architecture Benchmark</span>
+    <h1 class="h2 fw-bold mb-1">Calibrated ANN vs Logistic Regression</h1>
+    <p class="text-muted small mb-0">Head-to-head evaluation on {{ metrics.dataset.source }}.</p>
+  </div>
+
+  <!-- Side-by-Side Cards -->
+  <div class="row g-4 mb-4">
+    {% set ann = metrics.models.ann %}
+    {% set lr = metrics.models.logistic %}
+
+    <div class="col-lg-6" data-aos="fade-up">
+      <div class="cx-card p-4 h-100 border-2" style="border-color: var(--cx-teal) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <span class="cx-badge-soft mb-1">Neural Network</span>
+            <h4 class="fw-bold mb-0">{{ ann.name }}</h4>
+          </div>
+          <div class="h3 fw-bold mb-0" style="color: var(--cx-teal-dark);">{{ "%.2f"|format(ann.roc_auc * 100) }}% <span class="small fw-normal text-muted">AUC</span></div>
+        </div>
+        <p class="small text-muted">
+          Multi-Layer Perceptron (64 &rarr; 32 ReLU hidden layers, L2 regularization &alpha;=0.05, early stopping) wrapped in 5-fold sigmoid probability calibration.
+        </p>
+        <div class="row g-2 text-center mt-2">
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">Acc</div><strong>{{ "%.1f"|format(ann.accuracy * 100) }}%</strong></div></div>
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">Prec</div><strong>{{ "%.1f"|format(ann.precision * 100) }}%</strong></div></div>
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">Rec</div><strong>{{ "%.1f"|format(ann.recall * 100) }}%</strong></div></div>
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">F1</div><strong>{{ "%.1f"|format(ann.f1 * 100) }}%</strong></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="60">
+      <div class="cx-card p-4 h-100 border-2" style="border-color: var(--cx-blue) !important;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <span class="badge bg-primary-subtle text-primary rounded-pill mb-1">Linear Baseline</span>
+            <h4 class="fw-bold mb-0">{{ lr.name }}</h4>
+          </div>
+          <div class="h3 fw-bold mb-0 text-primary">{{ "%.2f"|format(lr.roc_auc * 100) }}% <span class="small fw-normal text-muted">AUC</span></div>
+        </div>
+        <p class="small text-muted">
+          L2-regularized Logistic Regression (C=1.0) wrapped in 5-fold sigmoid calibration, providing fast linear interpretability and strong 5-fold CV stability.
+        </p>
+        <div class="row g-2 text-center mt-2">
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">Acc</div><strong>{{ "%.1f"|format(lr.accuracy * 100) }}%</strong></div></div>
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">Prec</div><strong>{{ "%.1f"|format(lr.precision * 100) }}%</strong></div></div>
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">Rec</div><strong>{{ "%.1f"|format(lr.recall * 100) }}%</strong></div></div>
+          <div class="col-3"><div class="p-2 rounded-3" style="background: var(--cx-aqua);"><div class="small text-muted">F1</div><strong>{{ "%.1f"|format(lr.f1 * 100) }}%</strong></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Metrics Table -->
+  <div class="cx-card p-4 mb-4">
+    <h5 class="fw-bold mb-3">Evaluation &amp; 5-Fold Cross-Validation Table</h5>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr class="small text-muted">
+            <th>Metric</th>
+            <th>Calibrated ANN (MLP)</th>
+            <th>Calibrated Logistic Regression</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="fw-semibold">Held-Out Test Accuracy</td><td>{{ "%.4f"|format(ann.accuracy) }}</td><td>{{ "%.4f"|format(lr.accuracy) }}</td></tr>
+          <tr><td class="fw-semibold">Precision (Positive CKD)</td><td>{{ "%.4f"|format(ann.precision) }}</td><td>{{ "%.4f"|format(lr.precision) }}</td></tr>
+          <tr><td class="fw-semibold">Recall / Sensitivity</td><td>{{ "%.4f"|format(ann.recall) }}</td><td>{{ "%.4f"|format(lr.recall) }}</td></tr>
+          <tr><td class="fw-semibold">F1 Score</td><td>{{ "%.4f"|format(ann.f1) }}</td><td>{{ "%.4f"|format(lr.f1) }}</td></tr>
+          <tr><td class="fw-semibold">Test ROC-AUC</td><td>{{ "%.4f"|format(ann.roc_auc) }}</td><td>{{ "%.4f"|format(lr.roc_auc) }}</td></tr>
+          <tr><td class="fw-semibold">5-Fold CV Accuracy</td><td>{{ "%.4f"|format(ann.cv_5fold.accuracy_mean) }} &plusmn; {{ "%.4f"|format(ann.cv_5fold.accuracy_std) }}</td><td>{{ "%.4f"|format(lr.cv_5fold.accuracy_mean) }} &plusmn; {{ "%.4f"|format(lr.cv_5fold.accuracy_std) }}</td></tr>
+          <tr><td class="fw-semibold">5-Fold CV F1</td><td>{{ "%.4f"|format(ann.cv_5fold.f1_mean) }} &plusmn; {{ "%.4f"|format(ann.cv_5fold.f1_std) }}</td><td>{{ "%.4f"|format(lr.cv_5fold.f1_mean) }} &plusmn; {{ "%.4f"|format(lr.cv_5fold.f1_std) }}</td></tr>
+          <tr><td class="fw-semibold">5-Fold CV ROC-AUC</td><td>{{ "%.4f"|format(ann.cv_5fold.roc_auc_mean) }} &plusmn; {{ "%.4f"|format(ann.cv_5fold.roc_auc_std) }}</td><td>{{ "%.4f"|format(lr.cv_5fold.roc_auc_mean) }} &plusmn; {{ "%.4f"|format(lr.cv_5fold.roc_auc_std) }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Verdict -->
+  <div class="cx-card p-4">
+    <h5 class="fw-bold mb-2"><i class="bi bi-chat-square-quote me-2 text-primary"></i>Engineering &amp; Clinical Verdict</h5>
+    <p class="mb-0 text-muted">
+      Both calibrated pipelines achieve <strong>{{ "%.2f"|format(ann.accuracy * 100) }}%</strong> held-out accuracy and near-perfect ROC-AUC (&ge; {{ "%.3f"|format(lr.roc_auc) }}).
+      <strong>Calibrated Logistic Regression</strong> offers marginally tighter 5-fold cross-validation AUC variance ({{ "%.4f"|format(lr.cv_5fold.roc_auc_mean) }} &plusmn; {{ "%.4f"|format(lr.cv_5fold.roc_auc_std) }}) and direct linear interpretability, while the <strong>Calibrated ANN (MLP)</strong> captures nonlinear multi-biomarker interactions (such as elevated serum creatinine paired with low hemoglobin and albuminuria), achieving <strong>{{ "%.4f"|format(ann.roc_auc) }}</strong> test ROC-AUC. Using ChronoX's <strong>Consensus</strong> mode combines both models for balanced screening confidence.
+    </p>
+  </div>
+</div>
+{% endblock %}

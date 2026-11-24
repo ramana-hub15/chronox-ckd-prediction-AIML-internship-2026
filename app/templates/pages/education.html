@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% from "partials/_svg_icons.html" import kidney_icon, pill_icon, stethoscope_icon %}
+
+{% block title %}CKD Education &amp; Stages – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="mb-4" data-aos="fade-up">
+    <span class="cx-badge-soft mb-2">{{ kidney_icon(18) }} Patient &amp; Clinician Reference</span>
+    <h1 class="h2 fw-bold mb-2">Understanding Chronic Kidney Disease (CKD)</h1>
+    <p class="text-muted" style="max-width: 760px;">
+      Chronic Kidney Disease is a gradual loss of kidney filtration capacity over three months or longer. Because early stages often produce no symptoms, biomarker screening is critical.
+    </p>
+  </div>
+
+  <!-- 5 Stages of CKD -->
+  <div class="cx-card p-4 mb-4" data-aos="fade-up">
+    <h4 class="fw-bold mb-3">The Five Stages of CKD (KDIGO eGFR Classification)</h4>
+    <div class="row g-3">
+      {% set stages = [
+        ("Stage 1", "≥ 90", "Kidney damage with normal or high eGFR (e.g., persistent albuminuria).", "low"),
+        ("Stage 2", "60 – 89", "Mild reduction in kidney function alongside structural or urine markers.", "low"),
+        ("Stage 3 (3a/3b)", "30 – 59", "Moderate decrease in filtration; nephrology monitoring and BP/glucose control vital.", "moderate"),
+        ("Stage 4", "15 – 29", "Severe loss of kidney function; specialist preparation and renal nutrition care.", "high"),
+        ("Stage 5", "< 15", "Kidney failure (ESKD); requires renal replacement therapy or transplant evaluation.", "high")
+      ] %}
+      {% for name, egfr, desc, tone in stages %}
+      <div class="col-md-6 col-lg">
+        <div class="p-3 rounded-4 h-100 border" style="border-color: var(--cx-border) !important;">
+          <span class="risk-pill risk-pill-{{ tone }} mb-2">{{ name }}</span>
+          <div class="fw-bold small mb-1">eGFR: {{ egfr }} mL/min/1.73m&sup2;</div>
+          <p class="small text-muted mb-0">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Risk Factors & Prevention -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6" data-aos="fade-up">
+      <div class="cx-card p-4 h-100">
+        <div class="d-flex align-items-center gap-2 mb-3 text-danger">
+          {{ stethoscope_icon(26) }}
+          <h5 class="fw-bold mb-0">Major Risk Factors</h5>
+        </div>
+        <ul class="small d-grid gap-2 mb-0 ps-3">
+          <li><strong>Hypertension:</strong> High blood pressure damages delicate glomerular capillaries over time.</li>
+          <li><strong>Diabetes Mellitus:</strong> Elevated blood glucose accelerates diabetic nephropathy.</li>
+          <li><strong>Proteinuria / Albuminuria:</strong> Persistent urine albumin is an early warning sign of filtration barrier injury.</li>
+          <li><strong>Family History &amp; Age:</strong> Risk increases after age 50 or with inherited kidney conditions.</li>
+          <li><strong>Frequent NSAID Use:</strong> Long-term over-the-counter painkillers can impair renal perfusion.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="60">
+      <div class="cx-card p-4 h-100">
+        <div class="d-flex align-items-center gap-2 mb-3 text-success">
+          {{ pill_icon(26) }}
+          <h5 class="fw-bold mb-0">Evidence-Based Prevention Tips</h5>
+        </div>
+        <ul class="small d-grid gap-2 mb-0 ps-3">
+          <li>Keep blood pressure controlled (typically &lt; 130/80 mmHg as advised by your doctor).</li>
+          <li>Manage HbA1c and fasting/random glucose if living with diabetes.</li>
+          <li>Reduce excess dietary sodium (&lt; 2,000 mg/day) and ultra-processed foods.</li>
+          <li>Stay physically active (150 minutes/week) and avoid tobacco.</li>
+          <li>Ask your clinician for routine Serum Creatinine (eGFR) and Urine Albumin checks.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ Accordion -->
+  <div class="cx-card p-4" data-aos="fade-up">
+    <h4 class="fw-bold mb-3">Frequently Asked Questions</h4>
+    <div class="accordion accordion-flush" id="ckdFaqAccordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+            Why does ChronoX use nine clinical parameters?
+          </button>
+        </h2>
+        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#ckdFaqAccordion">
+          <div class="accordion-body small text-muted">
+            These nine variables (Age, Blood Pressure, Specific Gravity, Albumin, Blood Glucose Random, Blood Urea, Serum Creatinine, Hemoglobin, and Hypertension) capture renal filtration, urine concentration, protein leakage, anemia, and cardiometabolic risk while remaining quick to obtain from routine lab panels.
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+            What does "calibrated probability" mean?
+          </button>
+        </h2>
+        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#ckdFaqAccordion">
+          <div class="accordion-body small text-muted">
+            Raw neural network outputs can be overconfident. ChronoX wraps both MLPClassifier (ANN) and Logistic Regression inside Scikit-learn's <code>CalibratedClassifierCV</code> so predicted percentages align closely with observed probabilities.
+          </div>
+        </div>
+      </div>
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+            Can I use ChronoX as a medical diagnosis?
+          </button>
+        </h2>
+        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#ckdFaqAccordion">
+          <div class="accordion-body small text-muted">
+            No. ChronoX is an educational and screening support tool only. Confirming CKD requires formal laboratory eGFR/uACR testing over 3+ months and evaluation by a licensed clinician.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

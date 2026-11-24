@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "partials/_svg_icons.html" import kidney_icon %}
+
+{% block title %}About – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="row g-4 align-items-center mb-4">
+    <div class="col-lg-8">
+      <span class="cx-badge-soft mb-2">{{ kidney_icon(18) }} System Architecture</span>
+      <h1 class="h2 fw-bold mb-2">About ChronoX</h1>
+      <p class="text-muted">
+        ChronoX is a full-stack clinical machine learning application built to demonstrate transparent, calibrated Chronic Kidney Disease risk screening with an accessible, mobile-first PWA interface.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-2"><i class="bi bi-diagram-3 me-2 text-primary"></i>ML Pipeline</h5>
+        <p class="small text-muted mb-2">Trained on <strong>{{ metrics.dataset.source }}</strong> using an 80/20 stratified split and 5-fold stratified cross-validation.</p>
+        <ul class="small text-muted d-grid gap-1 mb-0 ps-3">
+          <li>Median / mode imputation inside Scikit-learn <code>ColumnTransformer</code></li>
+          <li>Quantile winsorization (<code>ClinicalOutlierClipper</code>) fit exclusively on training folds</li>
+          <li><code>StandardScaler</code> feature normalization</li>
+          <li>5-fold sigmoid calibration via <code>CalibratedClassifierCV</code></li>
+        </ul>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-2"><i class="bi bi-shield-lock me-2 text-success"></i>Security &amp; Stack</h5>
+        <ul class="small text-muted d-grid gap-1 mb-0 ps-3">
+          <li>Flask 3.1 application factory with Blueprints &amp; SQLAlchemy ORM</li>
+          <li>Werkzeug salted password hashing, CSRF protection, and HTTPOnly cookies</li>
+          <li>Flask-Limiter brute-force protection on authentication routes</li>
+          <li>REST API endpoints: <code>/api/predict</code>, <code>/api/metrics</code>, <code>/api/history</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

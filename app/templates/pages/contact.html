@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Contact – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="cx-card p-4 p-lg-5">
+        <span class="cx-badge-soft mb-2"><i class="bi bi-envelope-heart"></i> Get in Touch</span>
+        <h1 class="h2 fw-bold mb-1">Contact ChronoX</h1>
+        <p class="text-muted small mb-4">Have feedback on the screening interface, REST API, or model metrics? Send us a note.</p>
+
+        <form method="post" action="{{ url_for('main.contact') }}" class="needs-shake" novalidate>
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="form-floating">
+                {{ form.name(class="form-control", id="contactName", placeholder="Your Name", required=true) }}
+                <label for="contactName">Your Name</label>
+              </div>
+              {% for err in form.name.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                {{ form.email(class="form-control", id="contactEmail", placeholder="Email", required=true) }}
+                <label for="contactEmail">Email Address</label>
+              </div>
+              {% for err in form.email.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <div class="form-floating">
+                {{ form.subject(class="form-control", id="contactSubject", placeholder="Subject", required=true) }}
+                <label for="contactSubject">Subject</label>
+              </div>
+              {% for err in form.subject.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <div class="form-floating">
+                {{ form.message(class="form-control", id="contactMessage", placeholder="Message", style="height: 140px;", required=true) }}
+                <label for="contactMessage">Message</label>
+              </div>
+              {% for err in form.message.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-cx-primary mt-4">
+            <i class="bi bi-send-fill"></i> Send Message
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

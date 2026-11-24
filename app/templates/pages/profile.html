@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Profile &amp; Settings – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="cx-card p-4 h-100">
+        <h4 class="fw-bold mb-1">Profile &amp; Appearance</h4>
+        <p class="text-muted small mb-4">Manage your display name, clinic affiliation, and preferred color theme.</p>
+
+        <form method="post" action="{{ url_for('auth.profile') }}" novalidate>
+          {{ profile_form.hidden_tag() }}
+          <input type="hidden" name="action" value="profile">
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Email Address</label>
+            <input type="email" class="form-control" value="{{ current_user.email }}" disabled>
+          </div>
+
+          <div class="mb-3">
+            <label for="profileName" class="form-label small fw-semibold">Full Name</label>
+            {{ profile_form.full_name(class="form-control", id="profileName") }}
+            {% for err in profile_form.full_name.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label for="profileOrg" class="form-label small fw-semibold">Clinic / Organization</label>
+            {{ profile_form.organization(class="form-control", id="profileOrg", placeholder="Optional") }}
+          </div>
+
+          <div class="mb-4">
+            <label for="profileTheme" class="form-label small fw-semibold">Theme Preference</label>
+            {{ profile_form.theme_preference(class="form-select", id="profileTheme") }}
+          </div>
+
+          <button type="submit" class="btn btn-cx-primary">
+            <i class="bi bi-check2-circle"></i> Save Settings
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="cx-card p-4 h-100">
+        <h4 class="fw-bold mb-1">Security &amp; Password</h4>
+        <p class="text-muted small mb-4">Update your account password periodically to keep records secure.</p>
+
+        <form method="post" action="{{ url_for('auth.profile') }}" novalidate>
+          {{ password_form.hidden_tag() }}
+          <input type="hidden" name="action" value="password">
+
+          <div class="mb-3">
+            <label for="currPass" class="form-label small fw-semibold">Current Password</label>
+            {{ password_form.current_password(class="form-control", id="currPass") }}
+            {% for err in password_form.current_password.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label for="newPass" class="form-label small fw-semibold">New Password (min 8 chars)</label>
+            {{ password_form.new_password(class="form-control", id="newPass") }}
+            {% for err in password_form.new_password.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-4">
+            <label for="confPass" class="form-label small fw-semibold">Confirm New Password</label>
+            {{ password_form.confirm_password(class="form-control", id="confPass") }}
+            {% for err in password_form.confirm_password.errors %}<div class="text-danger small mt-1">{{ err }}</div>{% endfor %}
+          </div>
+
+          <button type="submit" class="btn btn-cx-teal">
+            <i class="bi bi-key-fill"></i> Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById("profileTheme")?.addEventListener("change", function () {
+    document.documentElement.setAttribute("data-theme", this.value);
+    localStorage.setItem("chronox-theme", this.value);
+  });
+</script>
+{% endblock %}

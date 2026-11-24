@@ -1,0 +1,202 @@
+{% from "partials/_svg_icons.html" import brand_logo %}
+<!doctype html>
+<html lang="en" data-theme="{{ current_user.theme_preference if current_user.is_authenticated else 'light' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B3C5D">
+  <meta name="description" content="ChronoX – Chronic Kidney Disease Prediction System using calibrated ANN and Logistic Regression.">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}ChronoX – CKD Prediction System{% endblock %}</title>
+
+  <link rel="manifest" href="{{ url_for('main.manifest') }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/chronox.css') }}" rel="stylesheet">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Skip to main content</a>
+
+  <nav class="navbar navbar-expand-lg cx-navbar sticky-top" aria-label="Primary Navigation">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('main.landing') }}">
+        {{ brand_logo(34) }}
+        <span>Chrono<span style="color: var(--cx-teal);">X</span></span>
+      </a>
+
+      <div class="d-flex align-items-center gap-2 order-lg-3">
+        <button
+          type="button"
+          class="btn btn-cx-outline btn-sm px-2"
+          data-theme-toggle
+          data-authenticated="{{ 'true' if current_user.is_authenticated else 'false' }}"
+          aria-label="Toggle dark mode"
+          title="Toggle Light / Dark Theme">
+          <i data-theme-icon class="bi bi-moon-stars-fill"></i>
+        </button>
+
+        {% if current_user.is_authenticated %}
+        <div class="dropdown d-none d-lg-block">
+          <button class="btn btn-cx-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle"></i>
+            <span>{{ current_user.full_name.split(' ')[0] }}</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2">
+            <li><a class="dropdown-item rounded-3 py-2" href="{{ url_for('clinical.dashboard') }}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+            <li><a class="dropdown-item rounded-3 py-2" href="{{ url_for('auth.profile') }}"><i class="bi bi-gear me-2"></i>Profile &amp; Settings</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form method="post" action="{{ url_for('auth.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="dropdown-item rounded-3 py-2 text-danger">
+                  <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+                </button>
+              </form>
+            </li>
+          </ul>
+        </div>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-cx-outline btn-sm d-none d-lg-inline-flex">Sign In</a>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-cx-teal btn-sm d-none d-lg-inline-flex">Get Started</a>
+        {% endif %}
+
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#cxNavbarNav" aria-controls="cxNavbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+      </div>
+
+      <div class="collapse navbar-collapse order-lg-2" id="cxNavbarNav">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0 gap-lg-1">
+          {% if current_user.is_authenticated %}
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'clinical.dashboard' %}active{% endif %}" href="{{ url_for('clinical.dashboard') }}">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'clinical.predict' %}active{% endif %}" href="{{ url_for('clinical.predict') }}">Predict</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'clinical.history' %}active{% endif %}" href="{{ url_for('clinical.history') }}">History</a></li>
+          {% else %}
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.landing' %}active{% endif %}" href="{{ url_for('main.landing') }}">Home</a></li>
+          {% endif %}
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'clinical.analytics' %}active{% endif %}" href="{{ url_for('clinical.analytics') }}">Analytics</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'clinical.comparison' %}active{% endif %}" href="{{ url_for('clinical.comparison') }}">Models</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.education' %}active{% endif %}" href="{{ url_for('main.education') }}">CKD Guide</a></li>
+          <li class="nav-item"><a class="nav-link {% if request.endpoint == 'main.about' %}active{% endif %}" href="{{ url_for('main.about') }}">About</a></li>
+          <li class="nav-item d-lg-none">
+            {% if current_user.is_authenticated %}
+            <form method="post" action="{{ url_for('auth.logout') }}" class="mt-2">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-cx-coral w-100">Sign Out</button>
+            </form>
+            {% else %}
+            <div class="d-flex gap-2 mt-2">
+              <a href="{{ url_for('auth.login') }}" class="btn btn-cx-outline flex-fill">Sign In</a>
+              <a href="{{ url_for('auth.register') }}" class="btn btn-cx-teal flex-fill">Register</a>
+            </div>
+            {% endif %}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+      <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show rounded-4 shadow-sm" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <main id="mainContent" class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="container my-4">
+    <div class="cx-disclaimer-bar d-flex align-items-start gap-2" role="note" aria-label="Medical disclaimer">
+      <i class="bi bi-shield-exclamation fs-5 text-danger flex-shrink-0 mt-1"></i>
+      <div>
+        <strong>Medical Disclaimer:</strong> This tool is for educational and screening support only and is not a substitute for professional medical diagnosis. Always consult a qualified nephrologist or healthcare provider for clinical evaluation.
+      </div>
+    </div>
+  </div>
+
+  <footer class="cx-footer py-5">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            {{ brand_logo(30) }}
+            <span class="fs-5 fw-bold font-heading text-white">ChronoX</span>
+          </div>
+          <p class="small opacity-75 mb-2">
+            Calibrated Machine Learning screening for Chronic Kidney Disease across nine core renal biomarkers.
+          </p>
+        </div>
+        <div class="col-6 col-lg-2">
+          <h6 class="text-white fw-semibold mb-3">Platform</h6>
+          <ul class="list-unstyled small d-grid gap-2">
+            <li><a href="{{ url_for('clinical.predict') }}">Risk Screener</a></li>
+            <li><a href="{{ url_for('clinical.analytics') }}">Analytics</a></li>
+            <li><a href="{{ url_for('clinical.comparison') }}">Model Comparison</a></li>
+            <li><a href="{{ url_for('main.education') }}">CKD Stages</a></li>
+          </ul>
+        </div>
+        <div class="col-6 col-lg-3">
+          <h6 class="text-white fw-semibold mb-3">Information</h6>
+          <ul class="list-unstyled small d-grid gap-2">
+            <li><a href="{{ url_for('main.about') }}">About &amp; Methodology</a></li>
+            <li><a href="{{ url_for('main.contact') }}">Contact</a></li>
+            <li><a href="{{ url_for('main.privacy') }}">Privacy &amp; Disclaimer</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-3">
+          <h6 class="text-white fw-semibold mb-3">API &amp; PWA</h6>
+          <p class="small opacity-75 mb-2">Install ChronoX on mobile or integrate with REST endpoints <code>/api/predict</code> and <code>/api/metrics</code>.</p>
+        </div>
+      </div>
+      <hr class="border-light opacity-25 my-4">
+      <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center small opacity-75 gap-2">
+        <span>&copy; 2026 ChronoX Nephrology Screening Project.</span>
+        <span>Built with Scikit-learn, Flask &amp; Bootstrap 5.3</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mobile Bottom Tab Bar -->
+  <nav class="cx-bottom-nav d-lg-none" aria-label="Mobile Quick Navigation">
+    <a href="{{ url_for('clinical.dashboard') if current_user.is_authenticated else url_for('main.landing') }}" class="{% if request.endpoint in ['main.landing', 'clinical.dashboard'] %}active{% endif %}">
+      <i class="bi bi-house-heart fs-5"></i><span>Home</span>
+    </a>
+    <a href="{{ url_for('clinical.predict') }}" class="{% if request.endpoint == 'clinical.predict' %}active{% endif %}">
+      <i class="bi bi-activity fs-5"></i><span>Predict</span>
+    </a>
+    <a href="{{ url_for('clinical.analytics') }}" class="{% if request.endpoint == 'clinical.analytics' %}active{% endif %}">
+      <i class="bi bi-bar-chart-line fs-5"></i><span>Analytics</span>
+    </a>
+    <a href="{{ url_for('clinical.history') }}" class="{% if request.endpoint == 'clinical.history' %}active{% endif %}">
+      <i class="bi bi-clock-history fs-5"></i><span>History</span>
+    </a>
+    <a href="{{ url_for('auth.profile') if current_user.is_authenticated else url_for('auth.login') }}" class="{% if request.endpoint in ['auth.profile', 'auth.login'] %}active{% endif %}">
+      <i class="bi bi-person-circle fs-5"></i><span>Profile</span>
+    </a>
+  </nav>
+
+  <div id="cxToastContainer" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+  <script src="{{ url_for('static', filename='js/chronox.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

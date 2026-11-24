@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+{% from "partials/_svg_icons.html" import kidney_icon %}
+
+{% block title %}CKD Risk Prediction Wizard – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+          <span class="cx-badge-soft mb-2">{{ kidney_icon(18) }} 9-Parameter Clinical Screener</span>
+          <h1 class="h2 fw-bold mb-1">CKD Risk Assessment Wizard</h1>
+          <p class="text-muted small mb-0">Complete the 3 clinical steps below or load a sample patient profile.</p>
+        </div>
+        <div class="dropdown">
+          <button class="btn btn-cx-outline dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-magic"></i> Load Sample Patient
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2">
+            <li><button type="button" class="dropdown-item rounded-3 py-2 sample-preset" data-preset="low"><i class="bi bi-check-circle text-success me-2"></i>Healthy Profile (Low Risk)</button></li>
+            <li><button type="button" class="dropdown-item rounded-3 py-2 sample-preset" data-preset="moderate"><i class="bi bi-exclamation-circle text-warning me-2"></i>Borderline Profile (Moderate Risk)</button></li>
+            <li><button type="button" class="dropdown-item rounded-3 py-2 sample-preset" data-preset="high"><i class="bi bi-shield-exclamation text-danger me-2"></i>Elevated Markers (High Risk)</button></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step Progress Bar -->
+      <div class="mb-3">
+        <div class="progress rounded-pill mb-3" style="height: 8px;">
+          <div id="wizardProgressBar" class="progress-bar" role="progressbar" style="width: 33.3%; background: var(--cx-teal);" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="wizard-steps" role="tablist" aria-label="Prediction Steps">
+          <button type="button" class="wizard-step-pill active" data-step-btn="1"><span class="badge bg-light text-dark rounded-pill">1</span> Vitals</button>
+          <button type="button" class="wizard-step-pill" data-step-btn="2"><span class="badge bg-light text-dark rounded-pill">2</span> Urine &amp; Glucose</button>
+          <button type="button" class="wizard-step-pill" data-step-btn="3"><span class="badge bg-light text-dark rounded-pill">3</span> Renal Panel &amp; Model</button>
+        </div>
+      </div>
+
+      <form method="post" action="{{ url_for('clinical.predict') }}" id="predictWizardForm" class="cx-card p-4 p-lg-5 needs-shake" novalidate>
+        {{ form.hidden_tag() }}
+
+        <!-- STEP 1 -->
+        <div class="wizard-panel" data-step="1">
+          <h4 class="fw-bold mb-1">Step 1: Patient Context &amp; Blood Pressure</h4>
+          <p class="text-muted small mb-4">Demographic baseline and cardiovascular markers.</p>
+
+          <div class="mb-4">
+            <label for="patientLabel" class="form-label fw-semibold">Screening Label</label>
+            {{ form.patient_label(class="form-control", id="patientLabel", placeholder="e.g., Annual Checkup") }}
+          </div>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="ageInput" class="form-label fw-semibold mb-0">
+                  Age <span class="text-muted small">(yrs)</span>
+                  <i class="bi bi-info-circle ms-1 text-primary" data-bs-toggle="tooltip" title="Patient age in years (1–110)."></i>
+                </label>
+                <span class="small text-muted">Normal: 18–65 yrs</span>
+              </div>
+              <input type="range" class="cx-range mb-2" id="ageRange" min="1" max="100" step="1" value="{{ form.age.data or 48 }}" aria-label="Age slider">
+              {{ form.age(class="form-control", id="ageInput", min="1", max="110", step="1", required=true) }}
+            </div>
+
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="bpInput" class="form-label fw-semibold mb-0">
+                  Blood Pressure <span class="text-muted small">(mmHg)</span>
+                  <i class="bi bi-info-circle ms-1 text-primary" data-bs-toggle="tooltip" title="Resting diastolic blood pressure in mmHg as recorded in the UCI CKD schema."></i>
+                </label>
+                <span class="small text-muted">Normal: 60–80 mmHg</span>
+              </div>
+              <input type="range" class="cx-range mb-2" id="bpRange" min="40" max="180" step="5" value="{{ form.bp.data or 80 }}" aria-label="Blood pressure slider">
+              {{ form.bp(class="form-control", id="bpInput", min="40", max="200", step="1", required=true) }}
+            </div>
+
+            <div class="col-12">
+              <label for="htnSelect" class="form-label fw-semibold">
+                Hypertension History
+                <i class="bi bi-info-circle ms-1 text-primary" data-bs-toggle="tooltip" title="Diagnosed high blood pressure or antihypertensive therapy."></i>
+              </label>
+              {{ form.htn(class="form-select", id="htnSelect") }}
+              <div class="form-text">Normal reference: No</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end mt-4">
+            <button type="button" class="btn btn-cx-primary wizard-next">Continue to Step 2 <i class="bi bi-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="wizard-panel d-none" data-step="2">
+          <h4 class="fw-bold mb-1">Step 2: Urinalysis &amp; Blood Glucose</h4>
+          <p class="text-muted small mb-4">Urine concentration, protein leakage, and glycemic load.</p>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label for="sgSelect" class="form-label fw-semibold">
+                Specific Gravity
+                <i class="bi bi-info-circle ms-1 text-primary" data-bs-toggle="tooltip" title="Measures kidney ability to concentrate urine. Lower values (1.005–1.010) can signal impaired concentration."></i>
+              </label>
+              {{ form.sg(class="form-select", id="sgSelect") }}
+              <div class="form-text">Normal range: 1.015 – 1.025</div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="alInput" class="form-label fw-semibold mb-0">
+                  Albumin <span class="text-muted small">(0–5 scale)</span>
+                  <i class="bi bi-info-circle ms-1 text-primary" data-bs-toggle="tooltip" title="Urine dipstick albumin ordinal level from 0 (none) to 5 (severe proteinuria)."></i>
+                </label>
+                <span class="small text-muted">Normal: 0</span>
+              </div>
+              <input type="range" class="cx-range mb-2" id="alRange" min="0" max="5" step="1" value="{{ form.al.data or 0 }}" aria-label="Albumin slider">
+              {{ form.al(class="form-control", id="alInput", min="0", max="5", step="1", required=true) }}
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="bgrInput" class="form-label fw-semibold mb-0">
+                  Blood Glucose Random <span class="text-muted small">(mg/dL)</span>
+                  <i class="bi bi-info-circle ms-1 text-primary" data-bs-toggle="tooltip" title="Random non-fasting blood sugar level."></i>
+                </label>
+                <span class="small text-muted">Normal: 70 – 140 mg/dL</span>
+              </div>
+              <input type="range" class="cx-range mb-2" id="bgrRange" min="40" max="490" step="5" value="{{ form.bgr.data or 110 }}" aria-label="Blood glucose slider">
+              {{ form.bgr(class="form-control", id="bgrInput", min="20", max="600", step="1", required=true) }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-cx-outline wizard-prev"><i class="bi bi-arrow-left"></i> Back</button>
+            <button type="button" class="btn btn-cx-primary wizard-next">Continue to Step 3 <i class="bi bi-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="wizard-panel d-none" data-step="3">
+          <h4 class="fw-bold mb-1">Step 3: Renal Filtration &amp; Model Selection</h4>
+          <p class="text-muted small mb-4">Core serum filtration markers, hemoglobin, and calibrated ML engine.</p>
+
+          <div class="row g-4">
+            <div class="col-md-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="buInput" class="form-label fw-semibold mb-0">
+                  Blood Urea <span class="text-muted small">(mg/dL)</span>
+                </label>
+                <span class="small text-muted">10–45</span>
+              </div>
+              <input type="range" class="cx-range mb-2" id="buRange" min="5" max="250" step="1" value="{{ form.bu.data or 32 }}" aria-label="Blood urea slider">
+              {{ form.bu(class="form-control", id="buInput", min="1", max="400", step="0.5", required=true) }}
+            </div>
+
+            <div class="col-md-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="scInput" class="form-label fw-semibold mb-0">
+                  Serum Creatinine <span class="text-muted small">(mg/dL)</span>
+                </label>
+                <span class="small text-muted">0.6–1.2</span>
+              </div>
+              <input type="range" class="cx-range mb-2" id="scRange" min="0.4" max="15" step="0.1" value="{{ form.sc.data or 1.0 }}" aria-label="Serum creatinine slider">
+              {{ form.sc(class="form-control", id="scInput", min="0.2", max="80", step="0.05", required=true) }}
+            </div>
+
+            <div class="col-md-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label for="hemoInput" class="form-label fw-semibold mb-0">
+                  Hemoglobin <span class="text-muted small">(g/dL)</span>
+                </label>
+                <span class="small text-muted">12.0–17.5</span>
+              </div>
+              <input type="range" class="cx-range mb-2" id="hemoRange" min="3.5" max="18.5" step="0.1" value="{{ form.hemo.data or 14.2 }}" aria-label="Hemoglobin slider">
+              {{ form.hemo(class="form-control", id="hemoInput", min="2.5", max="22", step="0.1", required=true) }}
+            </div>
+
+            <div class="col-12">
+              <label for="modelChoice" class="form-label fw-semibold">Calibrated Model Selection</label>
+              {{ form.model_choice(class="form-select", id="modelChoice") }}
+              <div class="form-text">Consensus averages calibrated probabilities from both ANN (MLP) and Logistic Regression.</div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between mt-4">
+            <button type="button" class="btn btn-cx-outline wizard-prev"><i class="bi bi-arrow-left"></i> Back</button>
+            <button type="submit" class="btn btn-cx-teal px-4">
+              <i class="bi bi-cpu-fill"></i> Run CKD Prediction
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(function () {
+  let currentStep = 1;
+  const panels = document.querySelectorAll(".wizard-panel");
+  const stepBtns = document.querySelectorAll("[data-step-btn]");
+  const progressBar = document.getElementById("wizardProgressBar");
+
+  function goToStep(step) {
+    currentStep = step;
+    panels.forEach((p) => p.classList.toggle("d-none", parseInt(p.dataset.step, 10) !== step));
+    stepBtns.forEach((b) => {
+      const s = parseInt(b.dataset.stepBtn, 10);
+      b.classList.toggle("active", s === step);
+      b.classList.toggle("done", s < step);
+    });
+    progressBar.style.width = `${(step / 3) * 100}%`;
+    progressBar.setAttribute("aria-valuenow", String(Math.round((step / 3) * 100)));
+  }
+
+  document.querySelectorAll(".wizard-next").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (currentStep < 3) goToStep(currentStep + 1);
+    });
+  });
+  document.querySelectorAll(".wizard-prev").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (currentStep > 1) goToStep(currentStep - 1);
+    });
+  });
+  stepBtns.forEach((btn) => {
+    btn.addEventListener("click", () => goToStep(parseInt(btn.dataset.stepBtn, 10)));
+  });
+
+  // Sync range sliders and number inputs
+  const pairs = [
+    ["ageRange", "ageInput"],
+    ["bpRange", "bpInput"],
+    ["alRange", "alInput"],
+    ["bgrRange", "bgrInput"],
+    ["buRange", "buInput"],
+    ["scRange", "scInput"],
+    ["hemoRange", "hemoInput"]
+  ];
+  pairs.forEach(([rId, iId]) => {
+    const r = document.getElementById(rId);
+    const i = document.getElementById(iId);
+    if (!r || !i) return;
+    r.addEventListener("input", () => { i.value = r.value; });
+    i.addEventListener("input", () => {
+      const v = parseFloat(i.value);
+      if (!isNaN(v)) r.value = Math.min(Math.max(v, parseFloat(r.min)), parseFloat(r.max));
+    });
+  });
+
+  // Sample Patient Presets
+  const presets = {
+    low: {
+      patient_label: "Sample Healthy Adult",
+      age: 34, bp: 70, sg: "1.025", al: 0, bgr: 94, bu: 24, sc: 0.8, hemo: 15.1, htn: "0"
+    },
+    moderate: {
+      patient_label: "Sample Borderline Patient",
+      age: 56, bp: 90, sg: "1.015", al: 1, bgr: 152, bu: 48, sc: 1.4, hemo: 12.2, htn: "1"
+    },
+    high: {
+      patient_label: "Sample High-Risk Nephrology Case",
+      age: 64, bp: 100, sg: "1.010", al: 3, bgr: 245, bu: 88, sc: 3.4, hemo: 9.4, htn: "1"
+    }
+  };
+
+  document.querySelectorAll(".sample-preset").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const p = presets[btn.dataset.preset];
+      if (!p) return;
+      document.getElementById("patientLabel").value = p.patient_label;
+      document.getElementById("ageInput").value = p.age;
+      document.getElementById("ageRange").value = p.age;
+      document.getElementById("bpInput").value = p.bp;
+      document.getElementById("bpRange").value = p.bp;
+      document.getElementById("sgSelect").value = p.sg;
+      document.getElementById("alInput").value = p.al;
+      document.getElementById("alRange").value = p.al;
+      document.getElementById("bgrInput").value = p.bgr;
+      document.getElementById("bgrRange").value = p.bgr;
+      document.getElementById("buInput").value = p.bu;
+      document.getElementById("buRange").value = p.bu;
+      document.getElementById("scInput").value = p.sc;
+      document.getElementById("scRange").value = p.sc;
+      document.getElementById("hemoInput").value = p.hemo;
+      document.getElementById("hemoRange").value = p.hemo;
+      document.getElementById("htnSelect").value = p.htn;
+      window.showToast?.(`Loaded "${p.patient_label}"`, "success");
+    });
+  });
+})();
+</script>
+{% endblock %}

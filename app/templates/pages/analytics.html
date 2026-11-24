@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Clinical Analytics – ChronoX{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <span class="cx-badge-soft mb-2"><i class="bi bi-graph-up-arrow"></i> Interactive Chart.js Telemetry</span>
+      <h1 class="h2 fw-bold mb-1">Model &amp; Screening Analytics</h1>
+      <p class="text-muted small mb-0">
+        Evaluated on {{ metrics.dataset.source }} (Train: {{ metrics.dataset.train_samples }}, Test: {{ metrics.dataset.test_samples }}).
+      </p>
+    </div>
+    <a href="{{ url_for('clinical.comparison') }}" class="btn btn-cx-outline">
+      <i class="bi bi-columns-gap"></i> Detailed Model Comparison
+    </a>
+  </div>
+
+  {% if is_demo_preview %}
+  <div class="alert alert-info rounded-4 mb-4">
+    <i class="bi bi-info-circle me-1"></i> Showing aggregate <strong>demo user</strong> screening trends below. <a href="{{ url_for('auth.login') }}" class="fw-semibold">Sign in</a> to view your personal screening trajectory.
+  </div>
+  {% endif %}
+
+  <div class="row g-4 mb-4">
+    <!-- ROC Curve -->
+    <div class="col-lg-6" data-aos="fade-up">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-1">ROC Curves (Both Models)</h5>
+        <p class="small text-muted mb-3">True Positive Rate vs False Positive Rate on held-out test split.</p>
+        <div style="height: 290px;"><canvas id="rocChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Metric Comparison Bar Chart -->
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="60">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-1">Accuracy, Precision, Recall &amp; F1</h5>
+        <p class="small text-muted mb-3">Calibrated ANN (MLP) vs Calibrated Logistic Regression.</p>
+        <div style="height: 290px;"><canvas id="metricsBarChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Confusion Matrix Heatmaps -->
+    <div class="col-lg-6" data-aos="fade-up">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-1">Confusion Matrix Heatmaps</h5>
+        <p class="small text-muted mb-3">Held-out test set predictions (n={{ metrics.dataset.test_samples }}).</p>
+        <div class="row g-3">
+          {% for key, title in [('ann', 'Calibrated ANN'), ('logistic', 'Logistic Regression')] %}
+          {% set cm = metrics.models[key].confusion_matrix %}
+          {% set total = cm[0][0] + cm[0][1] + cm[1][0] + cm[1][1] %}
+          <div class="col-sm-6">
+            <div class="p-3 rounded-4 border" style="border-color: var(--cx-border) !important;">
+              <div class="fw-bold small mb-2 text-center">{{ title }}</div>
+              <div class="row g-2 text-center">
+                <div class="col-6">
+                  <div class="p-2 rounded-3 text-white" style="background: rgba(14, 124, 115, 0.92);">
+                    <div class="small opacity-75">True Neg</div>
+                    <div class="h5 fw-bold mb-0">{{ cm[0][0] }}</div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 rounded-3" style="background: rgba(255, 107, 107, {{ 0.2 + (cm[0][1]/total)*0.8 }});">
+                    <div class="small text-muted">False Pos</div>
+                    <div class="h5 fw-bold mb-0">{{ cm[0][1] }}</div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 rounded-3" style="background: rgba(245, 158, 11, {{ 0.22 + (cm[1][0]/total)*0.8 }});">
+                    <div class="small text-muted">False Neg</div>
+                    <div class="h5 fw-bold mb-0">{{ cm[1][0] }}</div>
+                  </div>
+                </div>
+                <div class="col-6">
+                  <div class="p-2 rounded-3 text-white" style="background: rgba(11, 60, 93, 0.94);">
+                    <div class="small opacity-75">True Pos</div>
+                    <div class="h5 fw-bold mb-0">{{ cm[1][1] }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Permutation Feature Importance -->
+    <div class="col-lg-6" data-aos="fade-up" data-aos-delay="60">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-1">Global Feature Importance</h5>
+        <p class="small text-muted mb-3">ROC-AUC drop under 25-repeat permutation testing.</p>
+        <div style="height: 260px;"><canvas id="importanceChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Risk Distribution Doughnut -->
+    <div class="col-lg-4" data-aos="fade-up">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-1">Risk Distribution</h5>
+        <p class="small text-muted mb-3">Screenings grouped by Low, Moderate, and High risk.</p>
+        <div style="height: 250px;"><canvas id="riskDoughnutChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Prediction History Line Chart -->
+    <div class="col-lg-8" data-aos="fade-up" data-aos-delay="60">
+      <div class="cx-card p-4 h-100">
+        <h5 class="fw-bold mb-1">Prediction Risk History</h5>
+        <p class="small text-muted mb-3">Chronological CKD risk score trajectory across saved screenings.</p>
+        <div style="height: 250px;"><canvas id="historyLineChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const metrics = {{ metrics | tojson }};
+  const bandCounts = {{ band_counts | tojson }};
+  const historySeries = {{ history_series | tojson }};
+  let charts = [];
+
+  function palette() {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    return {
+      text: dark ? "#EAF4FA" : "#102436",
+      muted: dark ? "#9CB4C9" : "#4E6478",
+      grid: dark ? "rgba(255,255,255,0.10)" : "rgba(11,60,93,0.08)",
+      blue: dark ? "#38BDF8" : "#0B3C5D",
+      teal: dark ? "#2DD4BF" : "#1FB5A8",
+      coral: "#FF6B6B",
+      amber: "#F59E0B"
+    };
+  }
+
+  function renderAllCharts() {
+    charts.forEach((c) => c.destroy());
+    charts = [];
+    const c = palette();
+
+    // 1. ROC Curves
+    const annRoc = metrics.models.ann.roc_curve.fpr.map((x, idx) => ({ x, y: metrics.models.ann.roc_curve.tpr[idx] }));
+    const lrRoc = metrics.models.logistic.roc_curve.fpr.map((x, idx) => ({ x, y: metrics.models.logistic.roc_curve.tpr[idx] }));
+    charts.push(new Chart(document.getElementById("rocChart"), {
+      type: "line",
+      data: {
+        datasets: [
+          { label: `ANN (AUC ${metrics.models.ann.roc_auc.toFixed(3)})`, data: annRoc, borderColor: c.teal, backgroundColor: "transparent", tension: 0.2, borderWidth: 3, pointRadius: 2 },
+          { label: `Logistic (AUC ${metrics.models.logistic.roc_auc.toFixed(3)})`, data: lrRoc, borderColor: c.blue, backgroundColor: "transparent", tension: 0.2, borderWidth: 3, pointRadius: 2 },
+          { label: "Random Baseline", data: [{ x: 0, y: 0 }, { x: 1, y: 1 }], borderColor: c.muted, borderDash: [5, 5], borderWidth: 1.5, pointRadius: 0 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: c.text } } },
+        scales: {
+          x: { type: "linear", min: 0, max: 1, title: { display: true, text: "False Positive Rate", color: c.text }, ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { type: "linear", min: 0, max: 1.02, title: { display: true, text: "True Positive Rate", color: c.text }, ticks: { color: c.text }, grid: { color: c.grid } }
+        }
+      }
+    }));
+
+    // 2. Metrics Comparison Bar Chart
+    const mKeys = ["accuracy", "precision", "recall", "f1"];
+    charts.push(new Chart(document.getElementById("metricsBarChart"), {
+      type: "bar",
+      data: {
+        labels: ["Accuracy", "Precision", "Recall", "F1 Score"],
+        datasets: [
+          { label: "Calibrated ANN", data: mKeys.map((k) => +(metrics.models.ann[k] * 100).toFixed(1)), backgroundColor: c.teal, borderRadius: 8 },
+          { label: "Logistic Regression", data: mKeys.map((k) => +(metrics.models.logistic[k] * 100).toFixed(1)), backgroundColor: c.blue, borderRadius: 8 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: c.text } } },
+        scales: {
+          y: { min: 80, max: 100, ticks: { color: c.text, callback: (v) => v + "%" }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text }, grid: { display: false } }
+        }
+      }
+    }));
+
+    // 3. Permutation Importance
+    const labelsMap = metrics.dataset.feature_labels;
+    const annImp = metrics.models.ann.permutation_importance;
+    const lrImp = metrics.models.logistic.permutation_importance;
+    const sortedFeats = Object.keys(annImp).sort((a, b) => (annImp[b] + lrImp[b]) - (annImp[a] + lrImp[a]));
+    charts.push(new Chart(document.getElementById("importanceChart"), {
+      type: "bar",
+      data: {
+        labels: sortedFeats.map((f) => labelsMap[f] || f),
+        datasets: [
+          { label: "ANN", data: sortedFeats.map((f) => annImp[f]), backgroundColor: c.teal, borderRadius: 6 },
+          { label: "Logistic", data: sortedFeats.map((f) => lrImp[f]), backgroundColor: c.blue, borderRadius: 6 }
+        ]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: c.text } } },
+        scales: {
+          x: { ticks: { color: c.text }, grid: { color: c.grid } },
+          y: { ticks: { color: c.text, font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    }));
+
+    // 4. Risk Distribution Doughnut
+    charts.push(new Chart(document.getElementById("riskDoughnutChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Low (<30%)", "Moderate (30–60%)", "High (>60%)"],
+        datasets: [{
+          data: [bandCounts.Low, bandCounts.Moderate, bandCounts.High],
+          backgroundColor: [c.teal, c.amber, c.coral],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "66%",
+        plugins: { legend: { position: "bottom", labels: { color: c.text } } }
+      }
+    }));
+
+    // 5. Prediction History Line Chart
+    charts.push(new Chart(document.getElementById("historyLineChart"), {
+      type: "line",
+      data: {
+        labels: historySeries.map((h) => h.date),
+        datasets: [
+          {
+            label: "Selected Risk Score (%)",
+            data: historySeries.map((h) => h.risk),
+            borderColor: c.coral,
+            backgroundColor: "rgba(255, 107, 107, 0.14)",
+            fill: true,
+            tension: 0.35,
+            borderWidth: 3,
+            pointRadius: 4
+          },
+          {
+            label: "ANN Score (%)",
+            data: historySeries.map((h) => h.ann),
+            borderColor: c.teal,
+            borderDash: [4, 4],
+            tension: 0.35,
+            borderWidth: 2,
+            pointRadius: 2
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: c.text } },
+          tooltip: {
+            callbacks: {
+              afterLabel: (ctx) => {
+                const item = historySeries[ctx.dataIndex];
+                return item ? `Screening: ${item.label}` : "";
+              }
+            }
+          }
+        },
+        scales: {
+          y: { min: 0, max: 100, ticks: { color: c.text, callback: (v) => v + "%" }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text }, grid: { display: false } }
+        }
+      }
+    }));
+  }
+
+  renderAllCharts();
+  window.addEventListener("chronox:themechange", renderAllCharts);
+})();
+</script>
+{% endblock %}
